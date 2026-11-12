@@ -1,0 +1,14 @@
+{
+  "name": "tambang-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PT Maul's Corp — Tambang Agent: agent office bertema tambang untuk Claude Code",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js",
+    "install-hooks": "node hooks.js install",
+    "uninstall-hooks": "node hooks.js uninstall"
+  },
+  "engines": { "node": ">=20" }
+}
