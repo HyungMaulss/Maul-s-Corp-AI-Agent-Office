@@ -154,13 +154,36 @@ function pose(c, t, moving) {
   c.body.position.y = by + (lie ? 0.2 : 0);
 }
 
-// ---------- live data (SSE from the relay) ----------
+// ---------- live data: SSE from the local relay, or WebSocket from the online relay (Cloudflare, needs a view key) ----------
 let ready = false;
-const es = new EventSource('/stream');
-es.onopen = () => setConn(true);
-es.onerror = () => setConn(false);
-es.onmessage = (m) => {
-  const list = JSON.parse(m.data), seen = new Set();
+if (q.has('key')) { store.set('key', q.get('key')); q.delete('key'); history.replaceState(null, '', location.pathname + (q.size ? '?' + q : '')); } // keep the key out of the address bar / recordings
+const LOCAL = ['127.0.0.1', 'localhost'].includes(location.hostname) && !store.get('key', '');
+if (LOCAL) {
+  const es = new EventSource('/stream');
+  es.onopen = () => setConn(true);
+  es.onerror = () => setConn(false);
+  es.onmessage = (m) => onSnapshot(JSON.parse(m.data));
+} else {
+  let wait = 2000;
+  const connect = () => {
+    const key = store.get('key', '') || prompt('View key Tambang Agent:') || '';
+    if (!key) return setConn(false);
+    store.set('key', key);
+    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?key=${encodeURIComponent(key)}`);
+    let ping, opened = false;
+    ws.onopen = () => { opened = true; wait = 2000; setConn(true); ping = setInterval(() => ws.send('ping'), 30000); };
+    ws.onmessage = (m) => { if (m.data !== 'pong') onSnapshot(JSON.parse(m.data)); };
+    ws.onclose = () => {
+      clearInterval(ping); setConn(false);
+      if (!opened && wait >= 16000) store.set('key', ''); // keeps failing before opening: probably a wrong key, ask again
+      setTimeout(connect, wait); wait = Math.min(wait * 2, 60000);
+    };
+  };
+  connect();
+}
+
+function onSnapshot(list) {
+  const seen = new Set();
   for (const a of list) {
     seen.add(a.id);
     let c = chars.get(a.id);
@@ -178,7 +201,7 @@ es.onmessage = (m) => {
   }
   ready = true;
   renderPanel();
-};
+}
 
 // ---------- alerts: desktop notification + horn ----------
 let audio = null;
@@ -357,7 +380,9 @@ function frame() {
     if (html !== c.html) { c.el.innerHTML = html; c.html = html; }
     c.el.className = `label g-${g}${focusId === c.data.id ? ' focused' : ''}`;
     c.el.title = label;
-    c.label.position.y = (c.view === 'mess' ? 1.1 : 2.1) + (c.slot % 2) * 0.6 - (riding ? 0.6 : 0);
+    // alternate heights so neighbours don't overlap; waiting labels are big, so they stack in screen pixels (zoom-independent)
+    c.label.position.y = (c.view === 'mess' ? 1.1 : 2.1) + (g === 'wait' ? 0 : (c.slot % 2) * 0.6) - (riding ? 0.6 : 0);
+    c.el.style.marginTop = g === 'wait' ? `${-c.slot * 38}px` : '';
 
     // dashed line from crew to its parent operator (FR-07)
     const parent = c.data.parent && chars.get(c.data.parent);

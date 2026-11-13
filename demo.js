@@ -1,8 +1,7 @@
 // FR-13 event simulator: fake Claude Code hook payloads through the real relay. Safe for recording (no real projects).
-import fs from 'node:fs';
+import { target } from './target.js';
 
-const token = fs.readFileSync(new URL('./.tambang-token', import.meta.url), 'utf8').trim();
-const URL_ = `http://127.0.0.1:${process.env.TAMBANG_PORT || 8787}/events`;
+const { url: URL_, token } = target();
 const send = async (p) => {
   const r = await fetch(URL_, { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` }, body: JSON.stringify(p) });
   if (!r.ok) throw new Error(`relay menolak event (${r.status})`);

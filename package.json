@@ -8,9 +8,14 @@
     "demo": "node demo.js",
     "hooks": "node setup-hooks.js",
     "hooks:remove": "node setup-hooks.js --remove",
-    "test": "node test.js"
+    "test": "node test.js",
+    "vendor": "node -e \"for (const f of ['build/three.module.js','build/three.core.js','examples/jsm/renderers/CSS2DRenderer.js','examples/jsm/utils/BufferGeometryUtils.js']) require('fs').cpSync('node_modules/three/'+f, 'public/vendor/three/'+f)\"",
+    "online:dev": "npx wrangler@4 dev --port 8790",
+    "deploy": "npx wrangler@4 deploy"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "three": "0.187.0"
   }

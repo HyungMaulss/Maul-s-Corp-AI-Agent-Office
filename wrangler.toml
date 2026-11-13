@@ -1,0 +1,18 @@
+# Online mode: `npm run deploy` (see README "Jalankan online").
+name = "tambang-agent"
+main = "worker.js"
+compatibility_date = "2025-09-01"
+
+[build]
+command = "npm run vendor"
+
+[assets]
+directory = "./public"
+
+[[durable_objects.bindings]]
+name = "SITE"
+class_name = "Site"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Site"]

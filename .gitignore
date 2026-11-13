@@ -3,3 +3,8 @@ data/
 .playwright-mcp/
 # secret relay token — never commit
 .tambang-token
+# online mode: secrets + build output
+.tambang-remote.json
+.dev.vars
+.wrangler/
+public/vendor/
