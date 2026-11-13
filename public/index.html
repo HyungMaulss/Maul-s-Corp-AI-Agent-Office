@@ -1,190 +1,36 @@
 <!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Tambang Agent</title>
-<meta name="theme-color" content="#020202">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
-<style>
-:root {
-  --bg: #020202; --panel: #0b0b0b; --line: #2a2a2a; --line2: #3d3d3d; --fg: #f4f4f0; --dim: #9a9a92;
-  --yellow: #facc15; --orange: #f97316; --red: #ef4444; --green: #22c55e; --cyan: #22d3ee; --blue: #60a5fa;
-  --mono: ui-monospace, "Cascadia Mono", Consolas, "Roboto Mono", monospace;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --sheet-min: 58px;
-}
-* { box-sizing: border-box; border-radius: 0 !important; }
-html, body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.35 var(--sans); }
-body { min-height: 100dvh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
-button, input { font: inherit; color: inherit; }
-button { background: var(--panel); border: 1px solid var(--line2); padding: 6px 9px; cursor: pointer; min-height: 34px; }
-button:hover { border-color: var(--fg); }
-button:focus-visible, input:focus-visible { outline: 2px solid var(--yellow); outline-offset: 1px; }
-button[aria-pressed="true"] { background: var(--yellow); color: #000; border-color: var(--yellow); font-weight: 700; }
-
-header { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 2px solid var(--line2); padding: 8px 10px 7px; }
-.brand { display: flex; align-items: center; gap: 9px; }
-.logo { width: 34px; height: 34px; flex: none; }
-.brand h1 { margin: 0; font: 800 15px/1.05 var(--sans); letter-spacing: .04em; text-transform: uppercase; }
-.brand small { display: block; font: 600 10px/1.2 var(--mono); color: var(--dim); letter-spacing: .12em; }
-#conn { margin-left: auto; font: 700 11px var(--mono); padding: 4px 7px; border: 1px solid var(--line2); white-space: nowrap; }
-#conn.live { color: var(--green); border-color: var(--green); }
-#conn.off { color: var(--red); border-color: var(--red); }
-.bar { display: flex; gap: 6px; margin-top: 7px; align-items: stretch; flex-wrap: wrap; }
-.count { display: flex; align-items: center; gap: 5px; font: 700 12px var(--mono); padding: 0 8px; border: 1px solid var(--line); min-height: 34px; }
-.count b { font-size: 16px; }
-.count.wait { border-color: var(--yellow); color: var(--yellow); }
-.count.wait.hot { background: var(--yellow); color: #000; }
-.tools { margin-left: auto; display: flex; gap: 6px; }
-
-#alert { display: none; position: sticky; top: var(--hdr, 92px); z-index: 19; width: 100%; text-align: left; border: 0;
-  border-bottom: 2px solid #000; padding: 9px 12px; font: 800 14px var(--sans); color: #000;
-  background: repeating-linear-gradient(-45deg, var(--yellow) 0 16px, #111 16px 22px); }
-#alert span { display: inline-block; max-width: 100%; background: var(--yellow); padding: 2px 6px; box-shadow: 0 0 0 2px #000; }
-#alert.show { display: block; }
-
-main { display: block; }
-#stage { position: relative; padding-bottom: calc(var(--sheet-min) + 8px); }
-canvas { display: block; margin: 0 auto; touch-action: manipulation; cursor: pointer; }
-.badges { position: absolute; left: 8px; top: 8px; display: flex; gap: 6px; pointer-events: none; }
-.badge { font: 800 11px var(--mono); padding: 3px 6px; border: 2px solid; background: #000; letter-spacing: .06em; display: none; }
-.badge.on { display: block; }
-#bContent { color: var(--red); border-color: var(--red); }
-#bDemo { color: var(--cyan); border-color: var(--cyan); }
-#fps { position: absolute; right: 8px; top: 8px; font: 600 10px var(--mono); color: var(--dim); pointer-events: none; }
-#tip { position: absolute; pointer-events: none; display: none; background: #000; border: 1px solid var(--fg); padding: 5px 7px; font: 12px var(--mono); max-width: 220px; z-index: 5; }
-
-#sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--panel); border-top: 2px solid var(--line2);
-  max-height: 72dvh; display: flex; flex-direction: column; transform: translateY(calc(100% - var(--sheet-min))); transition: transform .22s ease; }
-#sheet.open { transform: none; }
-#grab { width: 100%; border: 0; border-bottom: 1px solid var(--line); background: var(--panel); min-height: var(--sheet-min); display: flex; align-items: center; gap: 10px; padding: 6px 12px; text-align: left; }
-#grab .handle { width: 34px; height: 4px; background: var(--line2); flex: none; }
-#grab .sum { font: 700 12px var(--mono); flex: 1; }
-#grab .chev { font-size: 16px; transition: transform .2s; }
-#sheet.open #grab .chev { transform: rotate(180deg); }
-.body { overflow-y: auto; padding: 4px 12px calc(16px + env(safe-area-inset-bottom)); }
-h2 { font: 800 11px var(--mono); letter-spacing: .14em; color: var(--dim); margin: 14px 0 6px; text-transform: uppercase; display: flex; justify-content: space-between; }
-
-#list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-#list li button { width: 100%; display: grid; grid-template-columns: 30px 1fr auto; gap: 2px 9px; align-items: center; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 7px 4px; }
-#list li button:hover { background: #151515; }
-#list li.sel button { background: #1d1d12; box-shadow: inset 3px 0 0 var(--yellow); }
-#list li.sub button { padding-left: 22px; }
-.ico { grid-row: span 2; width: 30px; height: 30px; display: grid; place-items: center; font-size: 16px; border: 2px solid; background: #000; }
-.nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dur { font: 700 12px var(--mono); color: var(--dim); }
-.st { font: 12px var(--mono); color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; grid-column: 2 / 4; }
-.st b { font-weight: 700; }
-.empty { color: var(--dim); font: 12px var(--mono); padding: 12px 4px; border-bottom: 1px solid var(--line); }
-.empty button { margin-top: 8px; }
-
-#detail { border: 1px solid var(--line2); padding: 10px; margin-top: 10px; display: none; background: #070707; }
-#detail.show { display: block; }
-.dhead { display: flex; gap: 10px; align-items: center; }
-.dhead .ico { width: 40px; height: 40px; font-size: 21px; }
-.dhead h3 { margin: 0; font-size: 16px; }
-.dhead p { margin: 2px 0 0; font: 12px var(--mono); color: var(--dim); }
-.kv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0; }
-.kv div { border: 1px solid var(--line); padding: 5px 6px; }
-.kv small { display: block; font: 600 10px var(--mono); color: var(--dim); letter-spacing: .08em; }
-.kv b { font: 700 15px var(--mono); }
-.rename { display: flex; gap: 6px; }
-.rename input { flex: 1; min-width: 0; background: #000; border: 1px solid var(--line2); padding: 6px 8px; }
-.tl { list-style: none; margin: 10px 0 0; padding: 0; max-height: 220px; overflow-y: auto; font: 12px var(--mono); border-top: 1px solid var(--line); }
-.tl li { display: grid; grid-template-columns: 64px 1fr; gap: 6px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
-.tl time { color: var(--dim); }
-
-table { width: 100%; border-collapse: collapse; font: 12px var(--mono); }
-th, td { border: 1px solid var(--line); padding: 5px 6px; text-align: right; }
-th:first-child, td:first-child { text-align: left; }
-th { color: var(--dim); font-weight: 700; letter-spacing: .06em; font-size: 10px; }
-tfoot td { font-weight: 800; color: var(--yellow); }
-.foot { margin-top: 14px; font: 11px var(--mono); color: var(--dim); }
-
-#offline { display: none; position: fixed; inset: auto 10px 70px 10px; z-index: 40; background: #000; border: 2px solid var(--red); color: var(--fg); padding: 10px 12px; font: 13px var(--sans); }
-#offline.show { display: block; }
-#offline b { color: var(--red); }
-
-dialog { background: var(--panel); color: var(--fg); border: 2px solid var(--fg); padding: 0; width: min(560px, calc(100vw - 24px)); max-height: 86dvh; }
-dialog::backdrop { background: rgba(0,0,0,.75); }
-.dlg { padding: 14px; overflow-y: auto; max-height: 86dvh; }
-.dlg h2 { margin-top: 0; color: var(--fg); font-size: 13px; }
-.leg td, .leg th { text-align: left; vertical-align: top; }
-.leg td:first-child { font-size: 18px; text-align: center; width: 36px; }
-.dlg p { font-size: 13px; color: var(--dim); }
-code { font: 12px var(--mono); background: #000; border: 1px solid var(--line); padding: 1px 4px; }
-
-@media (min-width: 900px) {
-  main { display: grid; grid-template-columns: 1fr 390px; height: calc(100dvh - var(--hdr, 92px)); }
-  #alert.show ~ main { height: calc(100dvh - var(--hdr, 92px) - 40px); }
-  #stage { padding: 10px; display: grid; place-items: center; overflow: hidden; }
-  #sheet { position: static; transform: none; max-height: none; border-top: 0; border-left: 2px solid var(--line2); }
-  #grab { display: none; }
-  .body { padding-top: 0; }
-  #offline { inset: auto auto 16px 16px; max-width: 420px; }
-}
-@media (prefers-reduced-motion: reduce) { #sheet { transition: none; } }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tambang Agent</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    { "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/examples/jsm/" } }
+  </script>
 </head>
 <body>
-<header id="hdr">
-  <div class="brand">
-    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#facc15"/><path d="M10 38a22 22 0 0 1 44 0z" fill="#020202"/><rect x="6" y="38" width="52" height="6" fill="#020202"/><rect x="29" y="14" width="6" height="24" fill="#facc15"/><text x="32" y="58" font-family="Arial Black,Arial" font-weight="900" font-size="12" text-anchor="middle" fill="#020202">MC</text></svg>
-    <div>
-      <h1>PT Maul's Corp</h1>
-      <small>TAMBANG AGENT · SITE CLAUDE</small>
+  <main id="stage">
+    <button id="alert" hidden></button>
+    <div id="content-badge" hidden>● MODE KONTEN</div>
+    <div id="hint">Scroll: zoom · Seret: geser · Klik pekerja: fokus · Klik 2× / Esc: reset</div>
+  </main>
+  <aside id="panel">
+    <header>
+      <div><b>TAMBANG AGENT</b><span>by MAUL'S CORP</span></div>
+      <i id="conn" class="bad">● RELAY TERPUTUS</i>
+    </header>
+    <div class="controls">
+      <button id="btn-theme"></button>
+      <button id="btn-content"></button>
+      <button id="btn-notif"></button>
+      <button id="btn-sound"></button>
     </div>
-    <span id="conn" role="status">● …</span>
-  </div>
-  <div class="bar">
-    <span class="count wait" id="cWait" title="Menunggu Anda">⚠ <b>0</b></span>
-    <span class="count" id="cWork" title="Sedang bekerja">⛏ <b>0</b></span>
-    <span class="count" id="cIdle" title="Menganggur">☕ <b>0</b></span>
-    <div class="tools">
-      <button id="btnLegend" title="Arti warna & zona">?</button>
-      <button id="btnSound" aria-pressed="false" title="Klakson saat ada yang menunggu">🔊</button>
-      <button id="btnContent" aria-pressed="false" title="Mode konten: nama samaran, tanpa tool & token">🎬 Konten</button>
-      <button id="btnDemo" aria-pressed="false" title="Putar skenario demo">▶ Demo</button>
-    </div>
-  </div>
-</header>
-<button id="alert" aria-live="assertive"></button>
-<main>
-  <section id="stage">
-    <canvas id="cv" aria-label="Penampang tambang PT Maul's Corp" role="img"></canvas>
-    <div class="badges"><span class="badge" id="bContent">● MODE KONTEN</span><span class="badge" id="bDemo">DEMO</span></div>
-    <div id="fps"></div>
-    <div id="tip"></div>
-  </section>
-  <aside id="sheet">
-    <button id="grab" aria-expanded="false"><span class="handle"></span><span class="sum" id="sum">Karyawan</span><span class="chev">▲</span></button>
-    <div class="body">
-      <h2><span>Karyawan di site</span><span id="nAgents">0</span></h2>
-      <ul id="list"></ul>
-      <div id="detail"></div>
-      <h2><span>Papan produksi harian</span><span id="day"></span></h2>
-      <table id="prod"><thead><tr><th>KARYAWAN</th><th>RITASE</th><th>TONASE</th></tr></thead><tbody></tbody><tfoot></tfoot></table>
-      <p class="foot">Ritase = jumlah tool call · Tonase = token hari ini · reset 00:00.<br>Ketuk karyawan di peta atau daftar untuk detail.</p>
-    </div>
+    <div id="summary"></div>
+    <ol id="list"></ol>
+    <footer id="board"></footer>
   </aside>
-</main>
-<div id="offline" role="alert"><b>KONEKSI TERPUTUS.</b> Data terakhir mungkin basi. Pastikan laptop menyala, <code>npm start</code> jalan, dan Tailscale aktif. Mencoba lagi…</div>
-
-<dialog id="legend">
-  <div class="dlg">
-    <h2>Cara membaca tambang</h2>
-    <p>Posisi = status. Yang butuh tindakan Anda ada di paling atas (Pos STOP), yang bekerja di pit, yang menganggur di camp.</p>
-    <table class="leg"><thead><tr><th></th><th>Status</th><th>Zona / alat</th></tr></thead><tbody id="legBody"></tbody></table>
-    <p>Idle: 0–5 menit di kantin, 5–30 menit gym atau taman (tetap per karyawan), &gt;30 menit tidur di mess. Helm putih = subagent, garis putus-putus ke induknya. Safety talk pagi muncul sekali sehari saat sesi pertama dimulai.</p>
-    <p><b>Mode konten</b> mengganti nama dengan samaran dan menyembunyikan nama tool & angka token. Aktifkan sebelum merekam. <b>Demo</b> memutar skenario palsu dan menyembunyikan agent asli.</p>
-    <button id="legClose">Tutup</button>
-  </div>
-</dialog>
-<script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

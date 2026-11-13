@@ -1,1 +1,5 @@
+node_modules/
 data/
+.playwright-mcp/
+# secret relay token — never commit
+.tambang-token
